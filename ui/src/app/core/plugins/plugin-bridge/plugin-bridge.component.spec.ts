@@ -610,6 +610,87 @@ describe('pluginBridgeComponent', () => {
     })
   })
 
+  describe('the child bridge setup code', () => {
+    const SETUP_CODE = /^\d{3}-\d{2}-\d{3}$/
+
+    it('gives a new child bridge a setup code of its own', async () => {
+      const modal = await open([{ platform: 'TestPlatform' }])
+      const block = modal.configBlocks()[0]
+
+      await modal.toggleExternalBridge(block, true, '0')
+
+      // Without a pin the bridge would be paired with the main bridge's code
+      expect(block._bridge.pin).toMatch(SETUP_CODE)
+    })
+
+    it('does not give two new child bridges the same setup code', async () => {
+      const modal = await open([{ platform: 'TestPlatform' }, { platform: 'TestPlatform' }])
+      const [first, second] = modal.configBlocks()
+
+      await modal.toggleExternalBridge(first, true, '0')
+      await modal.toggleExternalBridge(second, true, '1')
+
+      expect(first._bridge.pin).toMatch(SETUP_CODE)
+      expect(second._bridge.pin).toMatch(SETUP_CODE)
+      expect(first._bridge.pin).not.toBe(second._bridge.pin)
+    })
+
+    it('keeps the setup code a bridge already had', async () => {
+      const modal = await open([
+        { platform: 'TestPlatform', _bridge: { username: '0E:11:11:11:11:11', port: 51001, pin: '630-27-655', name: 'Test Bridge', env: {} } },
+      ])
+      const block = modal.configBlocks()[0]
+      expect(block._bridge.pin).toBe('630-27-655')
+
+      // Switching a bridge off and on again must not change what the user has paired with
+      await modal.toggleExternalBridge(block, false, '0')
+      await modal.toggleExternalBridge(block, true, '0')
+
+      expect(block._bridge.pin).toBe('630-27-655')
+      expect(block._bridge.username).toBe('0E:11:11:11:11:11')
+    })
+
+    it('does not invent a setup code for an existing bridge that never had one', async () => {
+      const modal = await open([
+        { platform: 'TestPlatform', _bridge: { username: '0E:11:11:11:11:11', port: 51001, name: 'Test Bridge', env: {} } },
+      ])
+      const block = modal.configBlocks()[0]
+
+      await modal.toggleExternalBridge(block, false, '0')
+      await modal.toggleExternalBridge(block, true, '0')
+
+      expect(block._bridge.pin).toBeUndefined()
+    })
+
+    it('gives a matter-only bridge a setup code when it gains hap', async () => {
+      const modal = await open([{ platform: 'TestPlatform' }])
+      const block = modal.configBlocks()[0]
+
+      await modal.toggleHapBridge(block, true, '0')
+
+      expect(block._bridge.pin).toMatch(SETUP_CODE)
+    })
+
+    it('leaves the setup code of a bridge that is gaining hap alone', async () => {
+      const modal = await open([
+        { platform: 'TestPlatform', _bridge: { username: '0E:11:11:11:11:11', pin: '630-27-655', hap: false } },
+        { platform: 'TestPlatform', _bridge: { pin: '874-99-441' } },
+        { platform: 'TestPlatform', _bridge: { username: '0E:22:22:22:22:22', hap: false } },
+      ])
+      const [withIdentity, withOnlyPin, withoutPin] = modal.configBlocks()
+
+      await modal.toggleHapBridge(withIdentity, true, '0')
+      await modal.toggleHapBridge(withOnlyPin, true, '1')
+      await modal.toggleHapBridge(withoutPin, true, '2')
+
+      expect(withIdentity._bridge.pin).toBe('630-27-655')
+      expect(withOnlyPin._bridge.pin).toBe('874-99-441')
+
+      // It already has an identity that may be paired, so it keeps using whatever code it had
+      expect(withoutPin._bridge.pin).toBeUndefined()
+    })
+  })
+
   describe('the externals-only toggle', () => {
     it('writes the flag alongside the disabled state', async () => {
       const modal = await open(

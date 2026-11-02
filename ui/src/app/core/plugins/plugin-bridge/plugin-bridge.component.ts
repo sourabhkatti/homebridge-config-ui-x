@@ -14,6 +14,7 @@ import { ToastrService } from 'ngx-toastr'
 import { ApiService } from '@/app/core/communication/api.service'
 import { QrcodeComponent } from '@/app/core/components/qrcode/qrcode.component'
 import { RestartHomebridgeComponent } from '@/app/core/components/restart-homebridge/restart-homebridge.component'
+import { generateHapPin } from '@/app/core/helpers/hap-pin.helper'
 import { PLUGIN_BRIDGE_MODAL_DATA } from '@/app/core/modal-data-tokens'
 import { Plugin } from '@/app/core/plugins/manage-plugins.interfaces'
 import { ManagePluginsService } from '@/app/core/plugins/manage-plugins.service'
@@ -428,8 +429,11 @@ export class PluginBridgeComponent implements OnInit {
         && bridgeCache.hap.disableIdentifyingMaterial === true
 
       // Always create HAP bridge configuration when HAP toggle is enabled
+      // A new child bridge gets its own setup code, instead of sharing the main bridge's. A bridge that
+      // is being switched back on keeps the one it had, if any.
       block._bridge = {
         username: bridgeCache ? bridgeCache.username : this.generateUsername(),
+        pin: bridgeCache ? bridgeCache.pin : generateHapPin(),
         port: await this.getUnusedPort(),
         name: bridgeCache?.name || this.sanitizeBridgeName(plugin.displayName || plugin.name),
         model: bridgeCache?.model,
@@ -909,6 +913,7 @@ export class PluginBridgeComponent implements OnInit {
       // Restore HAP defaults if missing (Matter-only bridge gaining HAP).
       if (!block._bridge.username) {
         block._bridge.username = this.generateUsername()
+        block._bridge.pin ||= generateHapPin()
       }
       if (!block._bridge.port) {
         block._bridge.port = await this.getUnusedPort()
