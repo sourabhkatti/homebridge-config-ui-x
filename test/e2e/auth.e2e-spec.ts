@@ -1234,18 +1234,43 @@ describe('AuthController (e2e)', () => {
 
     const guard = app.get(WsLogGuard)
 
-    // Default: the log is readable by any signed-in user, which is the
-    // long-standing behaviour and must not change on upgrade.
+    // Default: the log is limited to administrators.
+    expect(configService.restrictLogsToAdmins).toBe(true)
+    expect(await guard.canActivate(contextFor(nonAdmin))).toBe(false)
+    expect(await guard.canActivate(contextFor(admin))).toBe(true)
+
+    // Opted out: any signed-in user can read the log.
     configService.restrictLogsToAdmins = false
     expect(await guard.canActivate(contextFor(nonAdmin))).toBe(true)
     expect(await guard.canActivate(contextFor(admin))).toBe(true)
 
-    // Restricted: administrators only.
     configService.restrictLogsToAdmins = true
-    expect(await guard.canActivate(contextFor(nonAdmin))).toBe(false)
-    expect(await guard.canActivate(contextFor(admin))).toBe(true)
+  })
 
-    configService.restrictLogsToAdmins = false
+  it('restrictLogsToAdmins is on by default and only an explicit false turns it off', () => {
+    const homebridgeConfig = (platforms: any[]) => ({
+      bridge: { name: 'Homebridge Test', port: 51826, pin: '874-99-441', username: '67:E4:1F:0E:A0:5D' },
+      accessories: [],
+      platforms,
+    }) as any
+    const uiBlock = (extra: Record<string, unknown> = {}) => ({ platform: 'config', name: 'Config', port: 8080, ...extra })
+
+    // The mock config.json does not mention the setting
+    const config = new ConfigService()
+    expect(config.restrictLogsToAdmins).toBe(true)
+
+    config.parseConfig(homebridgeConfig([]))
+    expect(config.restrictLogsToAdmins).toBe(true)
+
+    config.parseConfig(homebridgeConfig([uiBlock({ restrictLogsToAdmins: true })]))
+    expect(config.restrictLogsToAdmins).toBe(true)
+
+    config.parseConfig(homebridgeConfig([uiBlock({ restrictLogsToAdmins: false })]))
+    expect(config.restrictLogsToAdmins).toBe(false)
+
+    // Anything that is not a literal false keeps the log restricted
+    config.parseConfig(homebridgeConfig([uiBlock({ restrictLogsToAdmins: 'false' })]))
+    expect(config.restrictLogsToAdmins).toBe(true)
   })
 
   it('WsGuard disconnects setup-wizard token once setup wizard completes', async () => {

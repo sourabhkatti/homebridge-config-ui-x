@@ -50,11 +50,11 @@ export class ConfigService {
     || this.runningInSynologyPackage
     || Boolean(process.env.HOMEBRIDGE_CONFIG_UI_TERMINAL === '1')
 
-  // The Homebridge log is readable by any signed-in user by default, which
-  // is long-standing behaviour. Plugin output routinely contains credentials
-  // in the clear, so an admin can restrict the log to administrators with
-  // `restrictLogsToAdmins` in the UI config.
-  public restrictLogsToAdmins = false
+  // The Homebridge log is limited to administrators by default. It contains
+  // the setup code, and plugin output routinely contains credentials in the
+  // clear. An admin can open it to every signed-in user with
+  // `restrictLogsToAdmins: false` in the UI config.
+  public restrictLogsToAdmins = true
 
   // Plugin management
   public usePluginBundles = (process.env.UIX_USE_PLUGIN_BUNDLES === '1')
@@ -147,9 +147,8 @@ export class ConfigService {
       this.instanceBackupPath = resolve(this.storagePath, 'backups/instance-backups')
     }
 
-    // Off by default: the log has always been readable by any signed-in user,
-    // and turning that off for everyone on upgrade would be a surprise.
-    this.restrictLogsToAdmins = Boolean(this.ui.restrictLogsToAdmins)
+    // On by default, only an explicit `false` opens the log to every signed-in user
+    this.restrictLogsToAdmins = this.ui.restrictLogsToAdmins !== false
 
     this.secrets = this.getSecrets()
     this.instanceId = this.getInstanceId()

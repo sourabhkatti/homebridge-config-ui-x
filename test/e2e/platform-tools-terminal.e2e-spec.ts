@@ -407,17 +407,24 @@ describe('PlatformToolsTerminal (e2e)', () => {
     /**
      * The log restriction sits directly above this in the source and is a
      * separate setting: it must come from the UI config alone, and never
-     * inherit whatever the terminal environment says.
+     * follow whatever the terminal environment says. It is on by default.
      */
-    it('does not let the terminal environment restrict the log', () => {
-      const config = withEnv({
+    it('does not let the terminal environment change the log restriction', () => {
+      const terminalOn = withEnv({
         HOMEBRIDGE_CONFIG_UI_TERMINAL: '1',
         HOMEBRIDGE_CONFIG_UI: undefined,
         HOMEBRIDGE_SYNOLOGY_PACKAGE: '1',
         HOMEBRIDGE_APT_PACKAGE: '1',
       })
+      const terminalOff = withEnv({
+        HOMEBRIDGE_CONFIG_UI_TERMINAL: undefined,
+        HOMEBRIDGE_CONFIG_UI: undefined,
+        HOMEBRIDGE_SYNOLOGY_PACKAGE: undefined,
+        HOMEBRIDGE_APT_PACKAGE: undefined,
+      })
 
-      expect(config.restrictLogsToAdmins).toBe(false)
+      expect(terminalOn.restrictLogsToAdmins).toBe(true)
+      expect(terminalOff.restrictLogsToAdmins).toBe(true)
     })
   })
 

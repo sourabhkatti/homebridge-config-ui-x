@@ -10,11 +10,11 @@ import { SettingsService } from '@/app/core/ui/settings.service'
 /**
  * Guards the log viewer.
  *
- * The Homebridge log is readable by any signed-in user by default, which is the
- * long-standing behaviour. When an admin sets `restrictLogsToAdmins` in the UI
- * config, this defers to the admin guard instead — matching the backend, which
- * enforces the same rule on the log websocket (WsLogGuard). Without the route
- * guard a non-admin could still open /logs directly and get an empty terminal.
+ * The Homebridge log is limited to administrators by default. Unless an admin
+ * sets `restrictLogsToAdmins: false` in the UI config, this defers to the admin
+ * guard — matching the backend, which enforces the same rule on the log
+ * websocket (WsLogGuard). Without the route guard a non-admin could still open
+ * /logs directly and get an empty terminal.
  */
 export const logsGuard: CanActivateFn = async (next, state) => {
   // ⚠️ Captured up front, and every `inject()` here must stay above the first

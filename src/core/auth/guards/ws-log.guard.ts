@@ -11,10 +11,11 @@ import { extractWsToken } from './ws-token.js'
 /**
  * Guards the log stream.
  *
- * The Homebridge log has always been readable by any signed-in user, and that
- * stays the default. Plugin output routinely contains credentials in the clear,
- * though, so an admin can set `restrictLogsToAdmins` in the UI config to limit
- * it to administrators — at which point this behaves like WsAdminGuard.
+ * The Homebridge log contains the setup code, and plugin output routinely
+ * contains credentials in the clear, so by default it is limited to
+ * administrators and this behaves like WsAdminGuard. An admin can set
+ * `restrictLogsToAdmins: false` in the UI config to let any signed-in user
+ * read it.
  */
 @Injectable()
 export class WsLogGuard implements CanActivate {
