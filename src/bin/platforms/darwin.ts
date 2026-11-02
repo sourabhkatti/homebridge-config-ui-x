@@ -385,7 +385,6 @@ export class DarwinInstaller extends BasePlatform {
       `             <string>${process.execPath}</string>`,
       `             <string>${this.hbService.selfPath}</string>`,
       '             <string>run</string>',
-      '             <string>-I</string>',
       '             <string>-U</string>',
       `             <string>${this.hbService.storagePath}</string>`,
       '        </array>',

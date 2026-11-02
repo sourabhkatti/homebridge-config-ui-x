@@ -33,7 +33,6 @@ export class Win32Installer extends BasePlatform {
       process.execPath,
       this.hbService.selfPath,
       'run',
-      '-I',
       '-U',
       this.hbService.storagePath,
     ]

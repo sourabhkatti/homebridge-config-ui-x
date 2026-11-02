@@ -7,7 +7,7 @@ import process from 'node:process'
 import { ValidationPipe } from '@nestjs/common'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { Test } from '@nestjs/testing'
-import { copy, readFile, readJson, remove, writeFile } from 'fs-extra'
+import { copy, readFile, readJson, remove, writeFile, writeJson } from 'fs-extra'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { AuthModule } from '../../src/core/auth/auth.module.js'
@@ -28,6 +28,9 @@ describe('PlatformToolsHbService (e2e)', () => {
     process.env.UIX_BASE_PATH = resolve(__dirname, '../../')
     process.env.UIX_STORAGE_PATH = resolve(__dirname, '../', '.homebridge')
     process.env.UIX_CONFIG_PATH = resolve(process.env.UIX_STORAGE_PATH, 'config.json')
+
+    // Insecure mode is off unless hb-service turned it on
+    delete process.env.UIX_INSECURE_MODE
 
     authFilePath = resolve(process.env.UIX_STORAGE_PATH, 'auth.json')
     secretsFilePath = resolve(process.env.UIX_STORAGE_PATH, '.uix-secrets')
@@ -91,6 +94,26 @@ describe('PlatformToolsHbService (e2e)', () => {
     })
 
     expect(res.statusCode).toBe(200)
+
+    // The mock env file turns insecure mode on explicitly
+    expect(res.json().HOMEBRIDGE_INSECURE).toBe(true)
+  })
+
+  it('GET /platform-tools/hb-service/homebridge-startup-settings (env file does not set insecure mode)', async () => {
+    await writeJson(envFilePath, { debugMode: false, keepOrphans: false, env: {} })
+
+    const res = await app.inject({
+      method: 'GET',
+      path: '/platform-tools/hb-service/homebridge-startup-settings',
+      headers: {
+        authorization,
+      },
+    })
+
+    expect(res.statusCode).toBe(200)
+
+    // Insecure mode is off unless it has been turned on
+    expect(res.json().HOMEBRIDGE_INSECURE).toBe(false)
   })
 
   it('GET /platform-tools/hb-service/homebridge-startup-settings (env file does not exist)', async () => {
@@ -105,6 +128,9 @@ describe('PlatformToolsHbService (e2e)', () => {
     })
 
     expect(res.statusCode).toBe(200)
+
+    // Insecure mode is off unless it has been turned on
+    expect(res.json().HOMEBRIDGE_INSECURE).toBe(false)
   })
 
   it('PUT /platform-tools/hb-service/homebridge-startup-settings', async () => {

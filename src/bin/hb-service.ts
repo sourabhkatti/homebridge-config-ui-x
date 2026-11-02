@@ -34,6 +34,7 @@ import { extract } from 'tar'
 import { check as tcpCheck } from 'tcp-port-used'
 
 import { RE_COLON, RE_NON_SCOPED, RE_PLUGIN_NAME, RE_SCOPED, RE_SERVICE_NAME } from '../core/regex.constants.js'
+import { isInsecureModeEnabled } from './insecure-mode.js'
 import { Logger } from './logger.js'
 import { DarwinInstaller } from './platforms/darwin.js'
 import { FreeBSDInstaller } from './platforms/freebsd.js'
@@ -63,7 +64,7 @@ export class HomebridgeServiceHelper {
   private homebridgePackage: { version: string, bin: { homebridge: string } }
   private homebridgeBinary: string
   private homebridge: ChildProcessWithoutNullStreams
-  private homebridgeOpts = ['-I']
+  private homebridgeOpts: string[] = []
   private homebridgeCustomEnv = {}
   private uiBinary: string
 
@@ -282,7 +283,8 @@ export class HomebridgeServiceHelper {
     process.env.UIX_CONFIG_PATH = resolve(this.storagePath, 'config.json')
     process.env.UIX_BASE_PATH = process.env.UIX_BASE_PATH_OVERRIDE || resolve(__dirname, '../../')
     process.env.UIX_SERVICE_MODE = '1'
-    process.env.UIX_INSECURE_MODE = '1'
+    // Insecure mode is off unless loadHomebridgeStartupOptions finds that it was requested
+    process.env.UIX_INSECURE_MODE = '0'
   }
 
   /**
@@ -1159,8 +1161,10 @@ export class HomebridgeServiceHelper {
    */
   private async loadHomebridgeStartupOptions() {
     try {
+      let homebridgeStartupOptions: any
+
       if (await pathExists(this.homebridgeStartupOptionsPath)) {
-        const homebridgeStartupOptions = await readJson(this.homebridgeStartupOptionsPath)
+        homebridgeStartupOptions = await readJson(this.homebridgeStartupOptionsPath)
 
         // Check if debug should be enabled
         if (homebridgeStartupOptions.debugMode && !this.homebridgeOpts.includes('-D')) {
@@ -1172,12 +1176,6 @@ export class HomebridgeServiceHelper {
           this.homebridgeOpts.push('-K')
         }
 
-        // Insecure mode is enabled by default, allow it to be removed if set to false
-        if (homebridgeStartupOptions.insecureMode === false && this.homebridgeOpts.includes('-I')) {
-          this.homebridgeOpts.splice(this.homebridgeOpts.findIndex(x => x === '-I'), 1)
-          process.env.UIX_INSECURE_MODE = '0'
-        }
-
         // Copy any custom env vars in
         Object.assign(this.homebridgeCustomEnv, homebridgeStartupOptions.env)
       } else if (this.docker) {
@@ -1185,12 +1183,13 @@ export class HomebridgeServiceHelper {
         if (process.env.HOMEBRIDGE_DEBUG === '1' && !this.homebridgeOpts.includes('-D')) {
           this.homebridgeOpts.push('-D')
         }
+      }
 
-        // Check old docker flag for insecure mode
-        if (process.env.HOMEBRIDGE_INSECURE !== '1' && this.homebridgeOpts.includes('-I')) {
-          this.homebridgeOpts.splice(this.homebridgeOpts.findIndex(x => x === '-I'), 1)
-          process.env.UIX_INSECURE_MODE = '0'
-        }
+      // Insecure mode is disabled by default, it is only enabled if the startup options ask for it
+      // (in docker the old HOMEBRIDGE_INSECURE flag is used when the startup options do not say)
+      if (isInsecureModeEnabled(homebridgeStartupOptions, this.docker, process.env)) {
+        this.homebridgeOpts.push('-I')
+        process.env.UIX_INSECURE_MODE = '1'
       }
     } catch (e) {
       this.logger.log(`Failed to load startup options as ${e.message}.`)

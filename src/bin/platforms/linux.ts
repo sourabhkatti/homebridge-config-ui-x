@@ -799,7 +799,7 @@ export class LinuxInstaller extends BasePlatform {
    */
   private async createSystemdEnvFile() {
     const envFile = [
-      `HOMEBRIDGE_OPTS=-I -U "${this.hbService.storagePath}"`,
+      `HOMEBRIDGE_OPTS=-U "${this.hbService.storagePath}"`,
       `UIX_STORAGE_PATH="${this.hbService.storagePath}"`,
       '',
       '# To enable web terminals via homebridge-config-ui-x uncomment the following line',

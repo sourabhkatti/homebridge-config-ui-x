@@ -12,7 +12,7 @@ export class HbServiceStartupSettings {
 
   @IsBoolean()
   @IsOptional()
-  @ApiProperty({ default: true, required: true, type: Boolean })
+  @ApiProperty({ default: false, required: true, type: Boolean })
   HOMEBRIDGE_INSECURE: boolean
 
   @IsString()
