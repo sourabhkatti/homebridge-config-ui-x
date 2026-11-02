@@ -69,6 +69,15 @@ describe('HbServiceInstallers (e2e)', () => {
     await rm(outDir, { recursive: true, force: true })
   })
 
+  describe('file permissions', () => {
+    it('should run the macOS launch daemon with umask 077 so new files are owner-only', async () => {
+      const plist = await createPlist(false)
+
+      // launchd takes the umask as a decimal integer: 63 is 077 in octal
+      expect(plist).toContain('<key>Umask</key>\n        <integer>63</integer>')
+    })
+  })
+
   describe('web terminal', () => {
     it('should not be enabled in the macOS launch daemon by default', async () => {
       const plist = await createPlist(false)

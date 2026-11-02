@@ -396,6 +396,10 @@ export class DarwinInstaller extends BasePlatform {
       `        <string>${this.hbService.storagePath}/homebridge.log</string>`,
       '    <key>UserName</key>',
       `        <string>${this.user}</string>`,
+      // Everything Homebridge and its plugins create is only accessible to the service user (umask 077).
+      // launchd takes the umask as a decimal integer: 63 is 077 in octal.
+      '    <key>Umask</key>',
+      '        <integer>63</integer>',
       '    <key>EnvironmentVariables</key>',
       '        <dict>',
       '            <key>PATH</key>',
