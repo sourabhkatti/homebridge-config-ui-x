@@ -802,8 +802,15 @@ export class LinuxInstaller extends BasePlatform {
       `HOMEBRIDGE_OPTS=-U "${this.hbService.storagePath}"`,
       `UIX_STORAGE_PATH="${this.hbService.storagePath}"`,
       '',
-      '# To enable web terminals via homebridge-config-ui-x uncomment the following line',
-      'HOMEBRIDGE_CONFIG_UI_TERMINAL=1',
+      ...(this.hbService.enableTerminal
+        ? [
+            '# Web terminals via homebridge-config-ui-x are enabled, comment out the following line to disable them',
+            'HOMEBRIDGE_CONFIG_UI_TERMINAL=1',
+          ]
+        : [
+            '# To enable web terminals via homebridge-config-ui-x uncomment the following line',
+            '#HOMEBRIDGE_CONFIG_UI_TERMINAL=1',
+          ]),
       '',
       'DISABLE_OPENCOLLECTIVE=true',
     ].filter(x => x !== null).join('\n')

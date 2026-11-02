@@ -409,8 +409,12 @@ export class DarwinInstaller extends BasePlatform {
       `                <string>${this.getUserHomeDir()}</string>`,
       '            <key>UIX_STORAGE_PATH</key>',
       `                <string>${this.hbService.storagePath}</string>`,
-      '            <key>HOMEBRIDGE_CONFIG_UI_TERMINAL</key>',
-      '                <string>1</string>',
+      ...(this.hbService.enableTerminal
+        ? [
+            '            <key>HOMEBRIDGE_CONFIG_UI_TERMINAL</key>',
+            '                <string>1</string>',
+          ]
+        : []),
       '        </dict>',
       '</dict>',
       '</plist>',

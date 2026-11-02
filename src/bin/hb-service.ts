@@ -56,6 +56,7 @@ export class HomebridgeServiceHelper {
   public usingCustomStoragePath = false
   public allowRunRoot = false
   public enableHbServicePluginManagement = false
+  public enableTerminal = false
   public asUser: string
   public addGroup: string
   public _logger: Logger
@@ -138,6 +139,7 @@ export class HomebridgeServiceHelper {
       .option('--port <port>', 'The port to set to the Homebridge UI when installing as a service', p => this.uiPort = Number.parseInt(p, 10))
       .option('--user <user>', 'The user account the Homebridge service will be installed as (Linux, FreeBSD, macOS only)', p => this.asUser = p)
       .option('--group <group>', 'The group the Homebridge service will be added to (Linux, FreeBSD, macOS only)', p => this.addGroup = p)
+      .option('--enable-terminal', 'Enable the web terminal in the UI when installing as a service, the same as running the installer with HOMEBRIDGE_CONFIG_UI_TERMINAL=1 (macOS, Linux, FreeBSD only)', () => this.enableTerminal = true)
       .option('--stdout', '', () => this.stdout = true)
       .option('--allow-root', '', () => this.allowRunRoot = true)
       .option('--docker', '', () => this.docker = true)
@@ -148,6 +150,10 @@ export class HomebridgeServiceHelper {
         this.action = cmd
       })
       .parse(process.argv)
+
+    // The web terminal is opt-in: it is enabled with --enable-terminal, or when the shell
+    // running the installer already has HOMEBRIDGE_CONFIG_UI_TERMINAL=1 set
+    this.enableTerminal ||= process.env.HOMEBRIDGE_CONFIG_UI_TERMINAL === '1'
 
     this.setEnv()
 

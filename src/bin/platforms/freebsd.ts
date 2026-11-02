@@ -303,7 +303,7 @@ export class FreeBSDInstaller extends BasePlatform {
       // command_args would run with -U "".
       `export HOME="$(eval echo ~\${${this.rcServiceName}_user})"`,
       'export PATH=/usr/local/bin:${PATH}', // eslint-disable-line no-template-curly-in-string
-      'export HOMEBRIDGE_CONFIG_UI_TERMINAL=1',
+      this.hbService.enableTerminal ? 'export HOMEBRIDGE_CONFIG_UI_TERMINAL=1' : '',
       `export UIX_STORAGE_PATH="\${${this.rcServiceName}_storage_path}"`,
       '',
       'pidfile="/var/run/${name}.pid"', // eslint-disable-line no-template-curly-in-string
