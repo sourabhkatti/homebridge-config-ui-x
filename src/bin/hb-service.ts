@@ -732,19 +732,28 @@ export class HomebridgeServiceHelper {
     const defaultAdapter = await networkInterfaceDefault()
     const defaultInterface = (await networkInterfaces()).find((x: any) => x.iface === defaultAdapter)
 
+    // The ui only listens on this machine unless a host has been set in the config.json
+    const uiConfig = (await this.readConfig().catch(() => ({}))).platforms?.find((x: any) => x.platform === 'config')
+    const listensOnNetwork = Boolean(uiConfig?.host) && !['127.0.0.1', '::1', 'localhost'].includes(uiConfig.host)
+
     console.log('\nManage Homebridge by going to one of the following in your browser:\n')
 
     console.log(`* http://localhost:${this.uiPort}`)
 
-    if (defaultInterface && defaultInterface.ip4) {
+    if (listensOnNetwork && defaultInterface && defaultInterface.ip4) {
       console.log(`* http://${defaultInterface.ip4}:${this.uiPort}`)
     }
 
-    if (defaultInterface && defaultInterface.ip6) {
+    if (listensOnNetwork && defaultInterface && defaultInterface.ip6) {
       console.log(`* http://[${defaultInterface.ip6}]:${this.uiPort}`)
     }
 
     console.log('')
+
+    if (!listensOnNetwork) {
+      console.log('The Homebridge UI only listens on this machine. To open it to your network set the Host IP Address')
+      console.log('under Network in the Homebridge UI settings, and use HTTPS and two-factor authentication.\n')
+    }
 
     this.logger.success('Homebridge setup complete.')
   }

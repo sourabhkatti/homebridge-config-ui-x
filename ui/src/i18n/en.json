@@ -701,7 +701,7 @@
   "settings.network.hb_package": "Homebridge Module Path",
   "settings.network.hb_package_desc": "If you have multiple versions of Homebridge installed, you can specify the path to the version you want to use here.",
   "settings.network.host": "Host IP Address",
-  "settings.network.host_desc": "The host IP address to listen on. In most cases this will be <code>::</code> or <code>0.0.0.0</code>.",
+  "settings.network.host_desc": "The host IP address to listen on. By default the UI only listens on <code>127.0.0.1</code>, so it can only be opened from this machine. To open it to your network enter <code>0.0.0.0</code> (or <code>::</code> to include IPv6), or the IP address of one network interface, and always use HTTPS and two-factor authentication.",
   "settings.network.mdns_advertise": "Advertise Via mDNS",
   "settings.network.mdns_advertise_help": "Enable mDNS advertising (using Bonjour) for your Homebridge UI, making it discoverable as an HTTP service on your local network.",
   "settings.network.message_network_interface": "If no network interfaces are selected, Homebridge will attempt to automatically determine on which interfaces to advertise.",

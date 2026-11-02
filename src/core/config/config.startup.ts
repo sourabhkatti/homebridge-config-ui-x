@@ -28,7 +28,14 @@ export async function getStartupConfig() {
     return addresses.find(x => x.family === 'IPv6')
   }).length
 
-  config.host = ipv6 ? '::' : '0.0.0.0'
+  // The ui only listens on the loopback interface unless a host is configured. Docker is the exception: the
+  // loopback interface of a container cannot be reached through its published ports, so the ui keeps listening
+  // on every interface there. Development mode ignores the configured host, so it does the same.
+  if (process.env.HOMEBRIDGE_CONFIG_UI === '1' || process.env.UIX_DEVELOPMENT === '1') {
+    config.host = ipv6 ? '::' : '0.0.0.0'
+  } else {
+    config.host = '127.0.0.1'
+  }
 
   // If no ui settings configured - we are done
   if (!ui) {
